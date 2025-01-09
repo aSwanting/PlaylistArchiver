@@ -71,7 +71,7 @@ async function togglePanel(panelHeader, panelBody) {
   } else {
     panelHeader.classList.add("closed");
     panelBody.style.height = h + "px";
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await delay(0);
     panelBody.style.height = "0px";
     panelBody.style.paddingBlock = 0 + "px";
   }
@@ -247,9 +247,11 @@ async function printItems(data) {
   findMissingBtn.innerHTML = "Search for missing playlist items";
 
   for (const item of data.items) {
+    const title = item.wbTitle ? item.wbTitle : item.title;
+    const url = item.wbUrl ? item.wbUrl : item.url;
     const gridItem = document.createElement("div");
     gridItem.className = `grid-item ${item.class}`;
-    gridItem.innerHTML = `<a href="${item.url}" target="_blank"><p>${item.title}</p></a>`;
+    gridItem.innerHTML = `<a href="${url}" target="_blank"><p>${title}</p></a>`;
     gridWrapperScroll.appendChild(gridItem);
   }
 
@@ -309,6 +311,7 @@ async function printItems(data) {
               item.class = "snapshot";
               item.wbUrl = `https://web.archive.org/web/${timestamp}/${item.url}`;
               item.wbTitle = await getTitleFromLink(proxyUrl + item.wbUrl);
+              console.log("title", item.wbTitle);
               gridItem.className = "grid-item snapshot";
               gridItem.innerHTML = `
                 <a href="${item.wbUrl}" target="_blank">
@@ -349,7 +352,7 @@ async function printItems(data) {
   requestAnimationFrame(async () => {
     details.style.opacity = 1;
     details.style.transform = "translateY(0px)";
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    await delay(200);
     gridWrapper.style.opacity = 1;
     gridWrapper.style.transform = "translateY(0px)";
   });
@@ -364,6 +367,7 @@ async function getTitleFromLink(url) {
     const text = await response.text();
     const parser = new DOMParser();
     const doc = parser.parseFromString(text, "text/html");
+    doc.title.replace("- Youtube", "");
     return doc.title &&
       doc.title !== "YouTube" &&
       doc.title !== "Wayback Machine"
@@ -382,6 +386,10 @@ function logResults(checkedCount, failedCount, info) {
   console.log("deleted: ", info.deleted);
   console.log("private: ", info.private);
   console.log("snapshot: ", info.snapshot);
+}
+
+async function delay(time) {
+  await new Promise((resolve) => setTimeout(resolve, time));
 }
 
 async function run() {
