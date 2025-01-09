@@ -225,16 +225,17 @@ async function printItems(data) {
     });
     console.log(missingItems);
     for (item of missingItems) {
+      const proxyUrl = "https://thingproxy.freeboard.io/fetch/";
       const cdxUrl = "https://web.archive.org/cdx/search/cdx?";
       const url = item.url;
       const output = "json";
       const sort = "ascending";
       const limit = 1;
       const params = new URLSearchParams({ url, output, sort, limit });
-      const apiUrl = cdxUrl + params;
+      const apiUrl = proxyUrl + cdxUrl + params;
       const response = await fetch(apiUrl);
-      const data = await response.json();
-      console.log(data);
+      const data = await response.text();
+      console.log("TEXT RES", data);
     }
   });
 
