@@ -110,11 +110,16 @@ async function addEventListeners() {
       output.innerHTML = "";
       togglePanel();
       loader.classList.add("visible");
-      const data = await fetchPlaylist(api, id);
-      const items = await fetchPlaylistItems(api, id);
-      const formattedData = formatPlaylistData(data, items);
-      loader.classList.remove("visible");
-      printItems(formattedData);
+      const localData = JSON.parse(localStorage.getItem("playlistData"));
+      if (localData && localData.info.id == id) {
+        printItems(localData);
+      } else {
+        const data = await fetchPlaylist(api, id);
+        const items = await fetchPlaylistItems(api, id);
+        const formattedData = formatPlaylistData(data, items);
+        loader.classList.remove("visible");
+        printItems(formattedData);
+      }
     }
   });
 }
@@ -152,13 +157,12 @@ async function fetchPlaylistItems(key, playlistId) {
 }
 
 function formatPlaylistData(data, items) {
-  console.log(data);
-  console.log(items);
   const formattedData = {
     info: {
       title: data.title,
       channel: data.channelTitle,
       description: data.description,
+      id: items[0].snippet.playlistId,
       url: `https://www.youtube.com/playlist?list=${items[0].snippet.playlistId}`,
       date: new Date(data.publishedAt).toDateString(),
       total: items.length,
@@ -180,7 +184,7 @@ function formatPlaylistData(data, items) {
       };
     }),
   };
-
+  localStorage.setItem("playlistData", JSON.stringify(formattedData));
   return formattedData;
 }
 
@@ -214,30 +218,13 @@ async function printItems(data) {
   <p>Title: <span>${data.info.title}</span></p>
   <p>Channel: <span>${data.info.channel}</span></p>
   <p>Published: <span>${data.info.date}</span></p>
-  <p>Total: <span>${data.info.total}</span> | Deleted: <span>${data.info.deleted}</span> | Private: <span>${data.info.private}</span></p>
-  <a href="${data.info.url}" target="_blank">View playlist on Youtube</a>
+  <p>Total: <span>${data.info.total}</span> 
+  | Deleted: <span>${data.info.deleted}</span> 
+  | Private: <span>${data.info.private}</span> 
+  ${data.info.snapshot ? `| Snapshot: <span>${data.info.snapshot}</span>` : ""}
+  </p><a href="${data.info.url}" target="_blank">View playlist on Youtube</a>
   `;
-
   findMissingBtn.innerHTML = "Search for missing playlist items";
-  findMissingBtn.addEventListener("click", async () => {
-    const missingItems = data.items.filter((e) => {
-      return e.class == "deleted" || e.class == "private";
-    });
-    console.log(missingItems);
-    for (item of missingItems) {
-      const proxyUrl = "https://thingproxy.freeboard.io/fetch/";
-      const cdxUrl = "https://web.archive.org/cdx/search/cdx?";
-      const url = item.url;
-      const output = "json";
-      const sort = "ascending";
-      const limit = 1;
-      const params = new URLSearchParams({ url, output, sort, limit });
-      const apiUrl = proxyUrl + cdxUrl + params;
-      const response = await fetch(apiUrl);
-      const data = await response.text();
-      console.log("TEXT RES", data);
-    }
-  });
 
   for (const item of data.items) {
     const gridItem = document.createElement("div");
@@ -246,12 +233,108 @@ async function printItems(data) {
     gridWrapperScroll.appendChild(gridItem);
   }
 
+  findMissingBtn.addEventListener("click", async () => {
+    findMissingBtn.disabled = true;
+    const gridItems = document.querySelectorAll(".grid-item");
+    const localData = JSON.parse(localStorage.getItem("playlistData"));
+    const info = localData ? localData.info : data.info;
+    const items = localData ? localData.items : data.items;
+    const missingItemsCount = info.deleted + info.private;
+
+    let checkedCount = 0;
+    let snapshotCount = 0;
+    let failedCount = 0;
+
+    info.deleted = 0;
+    info.private = 0;
+    info.snapshot = 0;
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.class == "deleted" || item.class == "private") {
+        if (!item.wayback) {
+          console.log(`Checking ${++checkedCount} of ${missingItemsCount}`);
+          const proxyUrl = "https://api.codetabs.com/v1/proxy?quest=";
+          const cdxUrl = "https://web.archive.org/cdx/search/cdx?";
+          const url = item.url;
+          const output = "json";
+          const sort = "ascending";
+          const limit = 1;
+          const fl = "timestamp,original,statuscode";
+          const params = new URLSearchParams({ url, output, sort, limit, fl });
+          const apiUrl = proxyUrl + encodeURIComponent(cdxUrl + params);
+          const response = await fetch(apiUrl);
+          if (response.ok) {
+            const resData = await response.json();
+            item.wayback = resData;
+            console.log(resData);
+            if (resData.length) {
+              snapshotCount++;
+              const gridItem = gridItems[i];
+              const timestamp = resData[1][0];
+              item.title = "Snapshot";
+              item.class = "snapshot";
+              item.wbUrl = `https://web.archive.org/web/${timestamp}/${item.url}`;
+              item.wbTitle = await getTitleFromLink(proxyUrl + item.wbUrl);
+              gridItem.className = "grid-item snapshot";
+              gridItem.innerHTML = `
+            <a href="${item.wbUrl}" target="_blank">
+            <p>${item.title}<br>${item.wbTitle}</p>
+              </a>
+            `;
+              console.log(item);
+            }
+          } else {
+            failedCount++;
+          }
+        }
+      }
+      if (item.class === "deleted") info.deleted++;
+      if (item.class === "private") info.private++;
+      if (item.class === "snapshot") info.snapshot++;
+    }
+    console.log("Search completed");
+    console.log("checked: ", checkedCount);
+    console.log("snapshots found: ", snapshotCount);
+    console.log("failed scans: ", failedCount);
+    console.log("deleted: ", info.deleted);
+    console.log("private: ", info.private);
+    console.log("snapshot: ", info.snapshot);
+
+    localStorage.setItem("playlistData", JSON.stringify({ info, items }));
+    console.log("Data saved to local storage");
+    findMissingBtn.disabled = false;
+
+    detailsText.innerHTML = `
+    <p>Title: <span>${info.title}</span></p>
+    <p>Channel: <span>${info.channel}</span></p>
+    <p>Published: <span>${info.date}</span></p>
+    <p>Total: <span>${info.total}</span> 
+    | Deleted: <span>${info.deleted}</span> 
+    | Private: <span>${info.private}</span> 
+    ${info.snapshot ? `| Snapshot: <span>${info.snapshot}</span>` : ""}
+    </p><a href="${info.url}" target="_blank">View playlist on Youtube</a>
+    `;
+  });
+  async function getTitleFromLink(url) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      const text = await response.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(text, "text/html");
+      return doc.title;
+    } catch (error) {
+      console.error("Error fetching title:", error);
+      return null;
+    }
+  }
   requestAnimationFrame(async () => {
     details.style.opacity = 1;
     details.style.transform = "translateY(0px)";
-
     await new Promise((resolve) => setTimeout(resolve, 200));
-
     gridWrapper.style.opacity = 1;
     gridWrapper.style.transform = "translateY(0px)";
   });
