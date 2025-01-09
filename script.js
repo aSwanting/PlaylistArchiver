@@ -42,17 +42,17 @@ function updateParamsDisplay(params, api, id) {
 }
 
 function updateDetailsText(detailsText, data) {
+  const i = data.info;
   detailsText.innerHTML = `
-    <p>Title: <span>${data.info.title}</span></p>
-    <p>Channel: <span>${data.info.channel}</span></p>
-    <p>Published: <span>${data.info.date}</span></p>
-    <p>Total: <span>${data.info.total}</span> 
-    | Deleted: <span>${data.info.deleted}</span> 
-    | Private: <span>${data.info.private}</span> 
-    ${
-      data.info.snapshot ? `| Snapshot: <span>${data.info.snapshot}</span>` : ""
-    }
-    </p><a href="${data.info.url}" target="_blank">View playlist on Youtube</a>
+    <p>Title: <span>${i.title}</span></p>
+    <p>Channel: <span>${i.channel}</span></p>
+    <p>Published: <span>${i.date}</span></p>
+    <p>Total: <span>${i.total}</span> 
+    | Deleted: <span>${i.deleted}</span> 
+    | Private: <span>${i.private}</span> 
+    ${i.snapshot ? `| Snapshot: <span>${i.snapshot}</span>` : ""}
+    ${i.lost ? `| Lost: <span>${i.lost}</span>` : ""}
+    </p><a href="${i.url}" target="_blank">View playlist on Youtube</a>
     `;
 }
 
@@ -192,6 +192,7 @@ async function fetchPlaylistItems(key, playlistId) {
 }
 
 function formatPlaylistData(data, items) {
+  items = items.slice(0, 20);
   const formattedData = {
     info: {
       title: data.title,
@@ -272,6 +273,7 @@ async function printItems(data) {
 
     let checkedCount = 0;
     let uncheckedCount = 0;
+    let snapshotsFound = 0;
     let titlesFound = 0;
     let failedCount = 0;
 
@@ -307,6 +309,7 @@ async function printItems(data) {
             if (snapshot.length) {
               findMissingBtn.innerHTML = `Searching... ${j} of ${missingItemsCount} checked<br>Snapshot found, attempting to fetch title...`;
               console.log("Snapshot found: ", snapshot);
+              snapshotsFound++;
               gridItem.innerHTML = "<a><p>Fetching title...</p></a>";
 
               const timestamp = snapshot[1][0];
@@ -359,13 +362,10 @@ async function printItems(data) {
     findMissingBtn.classList.remove("searching");
     findMissingBtn.disabled = false;
     findMissingBtn.innerHTML = `
-      <p>Scan Complete</p>
-      <p>Items Scanned: ${checkedCount}</p>
-      <p>Snapshots Found: ${info.snapshot}</p>
-      <p>Titles Found: ${titlesFound}</p>
-      <p>Items lost to time: ${info.lost}</p>
-      <p>Failures: ${failedCount} (Scan again to retry failures)</p>
-    `;
+    <p>Scan Complete</p>
+    <p>Items Scanned: ${checkedCount}, Failures: ${failedCount} (Scan again to retry failures)</p>
+    <p>Snapshots Found: ${snapshotsFound} (Titles: ${titlesFound}), Items Lost to Time: ${info.lost}</p>
+  `;
 
     data.info = info;
     updateDetailsText(detailsText, data);
