@@ -2,7 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no"
+    />
     <link rel="stylesheet" href="style.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
@@ -14,10 +17,12 @@
   </head>
 
   <body>
-    <div id="output">
+    <div id="app">
       <div class="form-wrapper">
-        <h2>Enter API Key and Playlist ID</h2>
-        <div class="playlist-form">
+        <div id="panel-header" class="form-header">
+          <h2>API Key | Playlist ID</h2>
+        </div>
+        <div id="panel-body" class="playlist-form">
           <div class="form-section">
             <input type="text" id="api-input" placeholder="API Key" />
             <button id="save-api" disabled>Save API</button>
@@ -30,6 +35,10 @@
           <button id="fetch-info" disabled>Fetch Playlist Info</button>
         </div>
       </div>
+      <div class="loader">
+        <div class="loader-frame"></div>
+      </div>
+      <div id="output"></div>
     </div>
     <script src="script.js"></script>
   </body>
