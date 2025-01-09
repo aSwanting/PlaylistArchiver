@@ -225,7 +225,7 @@ async function printItems(data) {
     });
     console.log(missingItems);
     for (item of missingItems) {
-      const cdxUrl = "https://web.archive.org/cdx/search/cdx";
+      const cdxUrl = "https://web.archive.org/cdx/search/cdx?";
       const url = item.url;
       const output = "json";
       const sort = "ascending";
