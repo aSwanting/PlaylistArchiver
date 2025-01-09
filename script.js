@@ -192,7 +192,7 @@ async function fetchPlaylistItems(key, playlistId) {
 }
 
 function formatPlaylistData(data, items) {
-  items = items.slice(0, 20);
+  // items = items.slice(0, 20);
   const formattedData = {
     info: {
       title: data.title,
@@ -363,8 +363,8 @@ async function printItems(data) {
     findMissingBtn.disabled = false;
     findMissingBtn.innerHTML = `
     <p>Scan Complete</p>
-    <p>Items Scanned: ${checkedCount}, Failures: ${failedCount} (Scan again to retry failures)</p>
-    <p>Snapshots Found: ${snapshotsFound} (Titles: ${titlesFound}), Items Lost to Time: ${info.lost}</p>
+    <p>Scanned: ${checkedCount}, Failures: ${failedCount} (Scan again to retry failures)</p>
+    <p>Snapshots Found: ${snapshotsFound} (Titles: ${titlesFound}), Lost to Time: ${info.lost}</p>
   `;
 
     data.info = info;
