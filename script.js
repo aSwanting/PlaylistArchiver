@@ -255,7 +255,7 @@ async function printItems(data) {
 
   findMissingBtn.addEventListener("click", async () => {
     findMissingBtn.disabled = true;
-    findMissingBtn.innerHTML = "Searching...";
+    findMissingBtn.innerHTML = "Searching... 0 of 0 checked";
     findMissingBtn.classList.add("searching");
 
     const gridItems = document.querySelectorAll(".grid-item");
@@ -277,6 +277,8 @@ async function printItems(data) {
       if (item.class == "deleted" || item.class == "private") {
         gridItem.className = `grid-item checking`;
         gridItem.innerHTML = "<a><p>Checking...</p></a>";
+        findMissingBtn.innerHTML = `Searching... ${checkedCount} of ${missingItemsCount} checked`;
+
         if (!item.wayback) {
           try {
             console.log(`Checking ${++checkedCount} of ${missingItemsCount}`);
