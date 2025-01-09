@@ -364,7 +364,11 @@ async function getTitleFromLink(url) {
     const text = await response.text();
     const parser = new DOMParser();
     const doc = parser.parseFromString(text, "text/html");
-    return doc.title && doc.title !== "YouTube" ? doc.title : "Unknown Title";
+    return doc.title &&
+      doc.title !== "YouTube" &&
+      doc.title !== "Wayback Machine"
+      ? doc.title
+      : "Unknown Title";
   } catch (error) {
     console.error("Error fetching title:", error);
     return "Unknown Title";
