@@ -288,7 +288,7 @@ button:disabled {
   color: var(--text-color);
   box-shadow: var(--shadow);
   overflow: hidden;
-  border: 3px solid transparent;
+  border: 2px solid transparent;
   transition: all 200ms;
 }
 
@@ -303,10 +303,6 @@ button:disabled {
   text-align: center;
 }
 
-.grid-item a:visited {
-  background-color: red !important;
-}
-
 .grid-item p {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -318,7 +314,7 @@ button:disabled {
 }
 
 .grid-item:hover {
-  border-color: rgba(255, 255, 255, 0.5);
+  border-color: rgba(255, 255, 255, 0.25);
   /* transform: scale(95%); */
 }
 
@@ -332,14 +328,19 @@ button:disabled {
   color: var(--text-color);
 }
 
-.snapshot {
-  background-color: #47a08a;
-  color: #252529;
-}
-
 .checking {
   background-color: var(--text-color);
   color: var(--input-bg-color);
+}
+
+.snapshot {
+  background-color: #579e8c;
+  color: #252529;
+}
+
+.snapshot-empty {
+  background-color: rgba(68, 61, 68, 0.473);
+  color: rgb(134, 90, 143);
 }
 
 ::-webkit-scrollbar {

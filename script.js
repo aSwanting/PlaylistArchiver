@@ -19,6 +19,13 @@ function prepareParamsForm(fetchBtn) {
   return { api, id };
 }
 
+function updateGridItem(item, gridItem) {
+  const title = item.wbTitle ? item.wbTitle : item.title;
+  const url = item.wbUrl ? item.wbUrl : item.url;
+  gridItem.className = `grid-item ${item.class}`;
+  gridItem.innerHTML = `<a href="${url}" target="_blank"><p>${title}</p></a>`;
+}
+
 function updateParamsDisplay(params, api, id) {
   let secretKey = "";
   params.style.display = api || id ? "flex" : "none";
@@ -247,11 +254,12 @@ async function printItems(data) {
   findMissingBtn.innerHTML = "Search for missing playlist items";
 
   for (const item of data.items) {
-    const title = item.wbTitle ? item.wbTitle : item.title;
-    const url = item.wbUrl ? item.wbUrl : item.url;
     const gridItem = document.createElement("div");
-    gridItem.className = `grid-item ${item.class}`;
-    gridItem.innerHTML = `<a href="${url}" target="_blank"><p>${title}</p></a>`;
+    updateGridItem(item, gridItem);
+    // gridItem.className = `grid-item ${item.class}`;
+    // const title = item.wbTitle ? item.wbTitle : item.title;
+    // const url = item.wbUrl ? item.wbUrl : item.url;
+    // gridItem.innerHTML = `<a href="${url}" target="_blank"><p>${title}</p></a>`;
     gridWrapperScroll.appendChild(gridItem);
   }
 
@@ -267,69 +275,71 @@ async function printItems(data) {
     const missingItemsCount = info.deleted + info.private;
 
     let checkedCount = 0;
+    let uncheckedCount = 0;
     let failedCount = 0;
 
     info.deleted = 0;
     info.private = 0;
     info.snapshot = 0;
 
-    for (let i = 0; i < items.length; i++) {
+    for (let i = 0, j = 0; i < items.length; i++) {
       const item = items[i];
       const gridItem = gridItems[i];
+
       if (item.class == "deleted" || item.class == "private") {
+        j++;
+        findMissingBtn.innerHTML = `Searching... ${j} of ${missingItemsCount} checked`;
+        console.log(`\nSearching... ${j} of ${missingItemsCount} checked`);
+
         gridItem.className = `grid-item checking`;
         gridItem.innerHTML = "<a><p>Checking...</p></a>";
-        findMissingBtn.innerHTML = `Searching... ${checkedCount} of ${missingItemsCount} checked`;
 
+        let snapshot;
         if (!item.wayback) {
           try {
-            console.log(`Checking ${++checkedCount} of ${missingItemsCount}`);
-            const proxyUrl = "https://api.codetabs.com/v1/proxy?quest=";
-            const cdxUrl = "https://web.archive.org/cdx/search/cdx?";
-            const params = new URLSearchParams({
-              url: item.url,
-              output: "json",
-              sort: "ascending",
-              limit: 1,
-              fl: "timestamp,original,statuscode",
-            });
-            const apiUrl = proxyUrl + encodeURIComponent(cdxUrl + params);
-
-            const response = await fetch(apiUrl);
-
-            if (!response.ok) {
-              throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-
-            const resData = await response.json();
-            item.wayback = resData;
-
-            if (resData.length) {
-              console.log("Snapshot found:", resData);
-              const timestamp = resData[1][0];
-              item.title = "Snapshot";
-              item.class = "snapshot";
-              item.wbUrl = `https://web.archive.org/web/${timestamp}/${item.url}`;
-              item.wbTitle = await getTitleFromLink(proxyUrl + item.wbUrl);
-              console.log("title", item.wbTitle);
-              gridItem.className = "grid-item snapshot";
-              gridItem.innerHTML = `
-                <a href="${item.wbUrl}" target="_blank">
-                  <p>${item.wbTitle}</p>
-                </a>
-              `;
-            } else {
-              gridItem.className = `grid-item ${item.class}`;
-              gridItem.innerHTML = `<a href="${item.url}" target="_blank"><p>${item.title}</p></a>`;
-              console.log("No snapshot found");
-            }
-          } catch (error) {
-            gridItem.className = `grid-item ${item.class}`;
-            gridItem.innerHTML = `<a href="${item.url}" target="_blank"><p>${item.title}</p></a>`;
-            console.error(`Error processing item ${i}:`, error);
+            snapshot = await findSnapshot(item);
+          } catch (e) {
+            console.error(e.message);
             failedCount++;
           }
+
+          if (snapshot) {
+            checkedCount++;
+            item.wayback = snapshot;
+            if (snapshot.length) {
+              findMissingBtn.innerHTML = `Searching... ${j} of ${missingItemsCount} checked<br>Snapshot found, attempting to fetch title...`;
+              console.log("Snapshot found: ", snapshot);
+
+              const timestamp = snapshot[1][0];
+              const proxyUrl = "https://api.codetabs.com/v1/proxy?quest=";
+              item.wbUrl = `https://web.archive.org/web/${timestamp}/${item.url}`;
+
+              let title;
+              try {
+                title = await getTitleFromLink(proxyUrl + item.wbUrl);
+              } catch (e) {
+                console.error(e.message);
+              }
+
+              item.wbTitle = title ? title : "Unknown Title";
+              item.class = "snapshot";
+              console.log("title: ", item.wbTitle);
+              updateGridItem(item, gridItem);
+            } else {
+              item.wbTitle = "Lost to Time...";
+              item.class = "snapshot-empty";
+              console.log("Snapshot Empty");
+              updateGridItem(item, gridItem);
+            }
+          } else {
+            uncheckedCount++;
+            updateGridItem(item, gridItem);
+          }
+        } else {
+          checkedCount++;
+          updateGridItem(item, gridItem);
         }
+        updateGridItem(item, gridItem);
       }
 
       if (item.class === "deleted") info.deleted++;
@@ -337,7 +347,7 @@ async function printItems(data) {
       if (item.class === "snapshot") info.snapshot++;
     }
 
-    logResults(checkedCount, failedCount, info);
+    logResults(checkedCount, uncheckedCount, failedCount, info);
 
     localStorage.setItem("playlistData", JSON.stringify({ info, items }));
     console.log("Data saved to local storage");
@@ -358,31 +368,55 @@ async function printItems(data) {
   });
 }
 
+async function findSnapshot(item) {
+  const proxyUrl = "https://api.codetabs.com/v1/proxy?quest=";
+  const cdxUrl = "https://web.archive.org/cdx/search/cdx?";
+  const params = new URLSearchParams({
+    url: item.url,
+    output: "json",
+    sort: "ascending",
+    limit: 1,
+    fl: "timestamp,original,statuscode",
+  });
+
+  const apiUrl = proxyUrl + encodeURIComponent(cdxUrl + params);
+  const response = await fetch(apiUrl);
+
+  if (!response.ok) {
+    throw new Error("Failed to reach Wayback Machine");
+  }
+
+  return await response.json();
+}
+
 async function getTitleFromLink(url) {
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-    const text = await response.text();
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(text, "text/html");
-    doc.title.replace("- Youtube", "");
-    return doc.title &&
-      doc.title !== "YouTube" &&
-      doc.title !== "Wayback Machine"
-      ? doc.title
-      : "Unknown Title";
-  } catch (error) {
-    console.error("Error fetching title:", error);
-    return "Unknown Title";
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch title");
+  }
+
+  const text = await response.text();
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(text, "text/html");
+  const cleanTitle = doc.title.replace("- YouTube", "").trim();
+
+  if (
+    cleanTitle &&
+    cleanTitle !== "YouTube" &&
+    cleanTitle !== "Wayback Machine" &&
+    cleanTitle !== "400 Bad Request"
+  ) {
+    return cleanTitle;
   }
 }
 
-function logResults(checkedCount, failedCount, info) {
+function logResults(checkedCount, uncheckedCount, failedCount, info) {
   console.log("Search completed");
-  console.log("checked: ", checkedCount);
-  console.log("failed scans: ", failedCount);
+  console.log("Checked with Wayback Machine: ", checkedCount);
+  console.log("Not checked with Wayback Machine: ", uncheckedCount);
+  console.log("Failed Scans: ", failedCount);
+  console.log("Total:", info.total);
   console.log("deleted: ", info.deleted);
   console.log("private: ", info.private);
   console.log("snapshot: ", info.snapshot);
@@ -399,7 +433,11 @@ async function run() {
   updateParamsDisplay(elements.params, api, id);
   addEventListeners(elements, loader, api, id);
   const localData = JSON.parse(localStorage.getItem("playlistData"));
-  if (localData && localData.info.id == id) printItems(localData);
+
+  if (localData && localData.info.id == id) {
+    printItems(localData);
+    togglePanel(elements.panelHeader, elements.panelBody);
+  }
 }
 
 run();
