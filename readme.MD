@@ -1,6 +1,6 @@
 # YouTube Playlist Archiver
 
-The YouTube Playlist Archiver is a web tool that scans a YouTube playlist to retrieve information about its videos. It's simple to use and automatically keeps track of items that fail during the scan.
+The YouTube Playlist Archiver is a web tool designed to help locate old, deleted, or private YouTube videos using archive.org's Wayback Machine. It scans a YouTube playlist, attempts to retrieve snapshots of videos, and fetches page titles that usually correspond to the video titles.
 
 ## Access the App
 
@@ -12,13 +12,7 @@ Use the app here:
 - A **YouTube API Key** (get one from the [Google Cloud Console](https://console.cloud.google.com/)).
 - The **Playlist ID** of the playlist you want to scan.
 
-## How It Works
+## Notes
 
-1. Enter your **YouTube API Key** and **Playlist ID**.
-2. Click "Scan" to start scanning the playlist.
-3. If some items fail to scan, rescanning will only process the failed items.
-
-### Local Storage
-
-- The app stores your API key, playlist ID, and scan data in your browser for convenience.
-- These values are overwritten when you reenter the API key or playlist ID.
+- If some items fail during a scan, rescanning will only process the failed items.
+- The app stores your API key, playlist ID, and scan data in your browser's local storage for convenience. These values are overwritten when new data is entered.
