@@ -256,10 +256,6 @@ async function printItems(data) {
   for (const item of data.items) {
     const gridItem = document.createElement("div");
     updateGridItem(item, gridItem);
-    // gridItem.className = `grid-item ${item.class}`;
-    // const title = item.wbTitle ? item.wbTitle : item.title;
-    // const url = item.wbUrl ? item.wbUrl : item.url;
-    // gridItem.innerHTML = `<a href="${url}" target="_blank"><p>${title}</p></a>`;
     gridWrapperScroll.appendChild(gridItem);
   }
 
@@ -276,11 +272,13 @@ async function printItems(data) {
 
     let checkedCount = 0;
     let uncheckedCount = 0;
+    let titlesFound = 0;
     let failedCount = 0;
 
     info.deleted = 0;
     info.private = 0;
     info.snapshot = 0;
+    info.lost = 0;
 
     for (let i = 0, j = 0; i < items.length; i++) {
       const item = items[i];
@@ -309,6 +307,7 @@ async function printItems(data) {
             if (snapshot.length) {
               findMissingBtn.innerHTML = `Searching... ${j} of ${missingItemsCount} checked<br>Snapshot found, attempting to fetch title...`;
               console.log("Snapshot found: ", snapshot);
+              gridItem.innerHTML = "<a><p>Fetching title...</p></a>";
 
               const timestamp = snapshot[1][0];
               const proxyUrl = "https://api.codetabs.com/v1/proxy?quest=";
@@ -321,11 +320,18 @@ async function printItems(data) {
                 console.error(e.message);
               }
 
-              item.wbTitle = title ? title : "Unknown Title";
+              if (title) {
+                item.wbTitle = title;
+                titlesFound++;
+              } else {
+                item.wbTitle = "Unknown Title";
+              }
+
               item.class = "snapshot";
               console.log("title: ", item.wbTitle);
               updateGridItem(item, gridItem);
             } else {
+              info.lost++;
               item.wbTitle = "Lost to Time...";
               item.class = "snapshot-empty";
               console.log("Snapshot Empty");
@@ -347,15 +353,21 @@ async function printItems(data) {
       if (item.class === "snapshot") info.snapshot++;
     }
 
-    logResults(checkedCount, uncheckedCount, failedCount, info);
-
     localStorage.setItem("playlistData", JSON.stringify({ info, items }));
     console.log("Data saved to local storage");
 
-    findMissingBtn.disabled = false;
-    findMissingBtn.innerHTML = "Search for missing playlist items";
     findMissingBtn.classList.remove("searching");
+    findMissingBtn.disabled = false;
+    findMissingBtn.innerHTML = `
+      <p>Scan Complete</p>
+      <p>Items Scanned: ${checkedCount}</p>
+      <p>Snapshots Found: ${info.snapshot}</p>
+      <p>Titles Found: ${titlesFound}</p>
+      <p>Items lost to time: ${info.lost}</p>
+      <p>Failures: ${failedCount} (Scan again to retry failures)</p>
+    `;
 
+    data.info = info;
     updateDetailsText(detailsText, data);
   });
 
@@ -409,17 +421,6 @@ async function getTitleFromLink(url) {
   ) {
     return cleanTitle;
   }
-}
-
-function logResults(checkedCount, uncheckedCount, failedCount, info) {
-  console.log("Search completed");
-  console.log("Checked with Wayback Machine: ", checkedCount);
-  console.log("Not checked with Wayback Machine: ", uncheckedCount);
-  console.log("Failed Scans: ", failedCount);
-  console.log("Total:", info.total);
-  console.log("deleted: ", info.deleted);
-  console.log("private: ", info.private);
-  console.log("snapshot: ", info.snapshot);
 }
 
 async function delay(time) {

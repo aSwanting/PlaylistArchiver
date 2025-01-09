@@ -94,6 +94,13 @@ h2 {
   font-weight: inherit;
 }
 
+h3 {
+  color: var(--highlight-color);
+  font-size: 1rem;
+  font-weight: inherit;
+  line-height: 2rem;
+}
+
 input,
 button {
   border: 1px solid var(--border-color);
@@ -236,12 +243,12 @@ button:disabled {
   width: 100%;
   height: 100%;
   font-size: 1.1rem;
-  line-height: 1.5rem;
+  line-height: 1.2rem;
   padding: var(--spacing);
 }
 
 .details-controls button.searching {
-  animation: pulsate 1.5s infinite;
+  animation: pulsate 3s infinite;
 }
 
 @keyframes pulsate {
@@ -315,7 +322,6 @@ button:disabled {
 
 .grid-item:hover {
   border-color: rgba(255, 255, 255, 0.25);
-  /* transform: scale(95%); */
 }
 
 .deleted {
