@@ -145,14 +145,20 @@ function addEventListeners(elements, loader, api, id) {
       saveItem("id", id, idInput, params, api, id)
     ) {
       output.innerHTML = "";
-      togglePanel(panelHeader, panelBody);
       loader.classList.add("visible");
 
-      const data = await fetchPlaylist(api, id);
-      const items = await fetchPlaylistItems(api, id);
-      const formattedData = formatPlaylistData(data, items);
-      loader.classList.remove("visible");
-      printItems(formattedData);
+      try {
+        const data = await fetchPlaylist(api, id);
+        const items = await fetchPlaylistItems(api, id);
+        const formattedData = formatPlaylistData(data, items);
+        loader.classList.remove("visible");
+        togglePanel(panelHeader, panelBody);
+        printItems(formattedData);
+      } catch (e) {
+        loader.classList.remove("visible");
+        console.error("Error occurred:", e);
+        alert(`Error: ${e.message || "Something went wrong"}`);
+      }
     }
   });
 }
@@ -161,10 +167,34 @@ async function fetchPlaylist(key, id) {
   const url = "https://www.googleapis.com/youtube/v3/playlists?";
   const params = new URLSearchParams({ key, id, part: "snippet" });
   const apiUrl = url + params;
-  const response = await fetch(apiUrl);
-  const data = await response.json();
-  const details = data.items[0].snippet;
-  return details;
+
+  let response;
+  let data;
+
+  try {
+    response = await fetch(apiUrl);
+    data = await response.json();
+  } catch (error) {
+    console.error("Network or parsing error:", error);
+    throw new Error(
+      "Failed to fetch the playlist. Please check your connection."
+    );
+  }
+
+  if (!response.ok) {
+    const errorMessage =
+      data?.error?.message || `HTTP Error: ${response.status}`;
+    console.error("API Error:", errorMessage);
+    throw new Error(errorMessage);
+  }
+
+  if (data.items && data.items.length > 0) {
+    const details = data.items[0].snippet;
+    return details;
+  } else {
+    console.warn("Playlist is empty or missing expected data:", data);
+    throw new Error("The playlist is empty or does not exist.");
+  }
 }
 
 async function fetchPlaylistItems(key, playlistId) {
