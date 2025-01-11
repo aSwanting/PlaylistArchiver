@@ -175,7 +175,6 @@ async function fetchPlaylist(key, id) {
     response = await fetch(apiUrl);
     data = await response.json();
   } catch (error) {
-    console.error("Network or parsing error:", error);
     throw new Error(
       "Failed to fetch the playlist. Please check your connection."
     );
@@ -184,7 +183,6 @@ async function fetchPlaylist(key, id) {
   if (!response.ok) {
     const errorMessage =
       data?.error?.message || `HTTP Error: ${response.status}`;
-    console.error("API Error:", errorMessage);
     throw new Error(errorMessage);
   }
 
@@ -192,8 +190,7 @@ async function fetchPlaylist(key, id) {
     const details = data.items[0].snippet;
     return details;
   } else {
-    console.warn("Playlist is empty or missing expected data:", data);
-    throw new Error("The playlist is empty or does not exist.");
+    throw new Error("The playlist is empty, private or does not exist.");
   }
 }
 
