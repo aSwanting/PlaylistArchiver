@@ -57,7 +57,7 @@ function updateDetailsText(detailsText, data) {
 }
 
 async function loadLoader() {
-  const loader = document.querySelector(".loader");
+  const loader = document.getElementById("loader");
   await fetch("./audio.svg")
     .then((response) => response.text())
     .then((data) => (loader.innerHTML = data));
@@ -144,11 +144,10 @@ function addEventListeners(elements, loader, api, id) {
       saveItem("api", api, apiInput, params, api, id) &&
       saveItem("id", id, idInput, params, api, id)
     ) {
-      output.innerHTML = "";
-      loader.classList.add("visible");
-
       try {
         const data = await fetchPlaylist(api, id);
+        output.innerHTML = "";
+        loader.classList.add("visible");
         const items = await fetchPlaylistItems(api, id);
         const formattedData = formatPlaylistData(data, items);
         loader.classList.remove("visible");
@@ -389,7 +388,7 @@ async function printItems(data) {
     findMissingBtn.classList.remove("searching");
     findMissingBtn.disabled = false;
     findMissingBtn.innerHTML = `
-    <p>Scan Complete</p>
+    <p><strong>Scan Complete</strong></p>
     <p>Scanned: ${checkedCount}, Failures: ${failedCount} (Scan again to retry failures)</p>
     <p>Snapshots Found: ${snapshotsFound} (Titles: ${titlesFound}), Lost to Time: ${info.lost}</p>
   `;
@@ -466,6 +465,29 @@ async function run() {
     printItems(localData);
     togglePanel(elements.panelHeader, elements.panelBody);
   }
+
+  //// HELP FRAME - Move to seperate function
+  const help = document.getElementById("help");
+  const helpClose = document.getElementById("help-close");
+  const helpOpen = document.getElementById("help-open");
+  helpOpen.addEventListener("click", () => {
+    help.style.display = "block";
+    requestAnimationFrame(() => {
+      help.style.opacity = 1;
+    });
+  });
+
+  helpClose.addEventListener("click", () => {
+    help.style.opacity = 0;
+    help.addEventListener(
+      "transitionend",
+      () => {
+        help.style.display = "none";
+      },
+      { once: true }
+    );
+  });
+  //////////////////////////////////////////////
 }
 
 run();

@@ -22,7 +22,9 @@
         <div id="panel-header" class="form-header">
           <h2>API Key | Playlist ID</h2>
         </div>
+
         <div id="panel-body" class="playlist-form">
+          <h3 id="help-open">Need Help<span>?</span></h3>
           <div class="form-section">
             <input type="text" id="api-input" placeholder="API Key" />
             <button id="save-api" disabled>Save API</button>
@@ -35,10 +37,67 @@
           <button id="fetch-info" disabled>Fetch Playlist Info</button>
         </div>
       </div>
-      <div class="loader">
+
+      <div id="output"></div>
+
+      <div id="help">
+        <div class="help-frame">
+          <div class="help-header">
+            <div id="help-close">+</div>
+            <h3>Need Help?</h3>
+          </div>
+          <p><strong>How to get an API key:</strong></p>
+          <ol>
+            <li>
+              Go to the
+              <a href="https://console.cloud.google.com/" target="_blank"
+                >Google Cloud Console</a
+              >.
+            </li>
+            <li>Create a new project or select an existing one.</li>
+            <li>
+              Navigate to <strong>APIs & Services</strong> >
+              <strong>Credentials</strong>.
+            </li>
+            <li>
+              Click <strong>Create Credentials</strong> >
+              <strong>API key</strong>.
+            </li>
+            <li>
+              Copy the generated API key and paste it into the input field.
+            </li>
+          </ol>
+
+          <p><strong>How to find the playlist ID:</strong></p>
+          <ol>
+            <li>Go to YouTube and open the playlist.</li>
+            <li>
+              Check the URL. The playlist ID is the part after
+              <code>list=</code>, e.g., <code>PL123456789ABCDEFG</code>.
+            </li>
+          </ol>
+
+          <p><strong>Common Issues:</strong></p>
+          <ul>
+            <li>
+              Make sure the playlist is public if you don’t have API access to
+              private playlists.
+            </li>
+            <li>
+              Double-check that your API key is valid and enabled for the
+              YouTube Data API v3.
+            </li>
+            <li>
+              Ensure the playlist ID is entered correctly without extra
+              characters.
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div id="loader">
         <div class="loader-frame"></div>
       </div>
-      <div id="output"></div>
     </div>
     <script src="script.js"></script>
   </body>
