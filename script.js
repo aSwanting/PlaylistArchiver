@@ -163,9 +163,11 @@ function addEventListeners(elements, loader, api, id) {
 }
 
 async function fetchPlaylist(key, id) {
-  console.log("send to backend");
-  const response = await fetch("/.netlify/functions/fetchPlaylist");
-  console.log(response);
+  console.log("Sending to backend with query parameter:", id);
+  const url = `/.netlify/functions/fetchPlaylist?id=${encodeURIComponent(id)}`;
+  const response = await fetch(url + id);
+  data = await response.json();
+  console.log(data);
 
   // const url = "https://www.googleapis.com/youtube/v3/playlists?";
   // const params = new URLSearchParams({ key, id, part: "snippet" });
