@@ -152,7 +152,7 @@ function addEventListeners(elements, loader, api, id) {
         const formattedData = formatPlaylistData(data, items);
         loader.classList.remove("visible");
         togglePanel(panelHeader, panelBody);
-        printItems(formattedData);
+        // printItems(formattedData);
       } catch (e) {
         loader.classList.remove("visible");
         console.error("Error occurred:", e);
@@ -162,41 +162,12 @@ function addEventListeners(elements, loader, api, id) {
   });
 }
 
-async function fetchPlaylist(key, id) {
+async function fetchPlaylist(id) {
   console.log("Sending to backend with query parameter:", id);
   const url = `/.netlify/functions/fetchPlaylist?id=${encodeURIComponent(id)}`;
   const response = await fetch(url + id);
   data = await response.json();
   console.log(data);
-
-  // const url = "https://www.googleapis.com/youtube/v3/playlists?";
-  // const params = new URLSearchParams({ key, id, part: "snippet" });
-  // const apiUrl = url + params;
-
-  // let response;
-  // let data;
-
-  // try {
-  //   response = await fetch(apiUrl);
-  //   data = await response.json();
-  // } catch (error) {
-  //   throw new Error(
-  //     "Failed to fetch the playlist. Please check your connection."
-  //   );
-  // }
-
-  // if (!response.ok) {
-  //   const errorMessage =
-  //     data?.error?.message || `HTTP Error: ${response.status}`;
-  //   throw new Error(errorMessage);
-  // }
-
-  // if (data.items && data.items.length > 0) {
-  //   const details = data.items[0].snippet;
-  //   return details;
-  // } else {
-  //   throw new Error("The playlist is empty, private or does not exist.");
-  // }
 }
 
 async function fetchPlaylistItems(key, playlistId) {
