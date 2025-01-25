@@ -134,7 +134,7 @@ function addEventListeners(elements, loader, api, id) {
 async function fetchPlaylist(id) {
   console.log("Sending to backend with query parameter:", id);
   const url = `/.netlify/functions/fetchPlaylist?id=${encodeURIComponent(id)}`;
-  const response = await fetch(url + id);
+  const response = await fetch(url);
   data = await response.json();
   return data;
 }

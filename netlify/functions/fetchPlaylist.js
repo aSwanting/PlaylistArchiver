@@ -10,8 +10,8 @@ export async function handler(event) {
   const data = await response.json();
 
   return {
-    statusCode: 500,
-    body: data,
+    statusCode: 200,
+    body: JSON.stringify(data),
   };
 }
 
