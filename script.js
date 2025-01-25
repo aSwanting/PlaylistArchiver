@@ -163,58 +163,65 @@ function addEventListeners(elements, loader, api, id) {
 }
 
 async function fetchPlaylist(key, id) {
-  const url = "https://www.googleapis.com/youtube/v3/playlists?";
-  const params = new URLSearchParams({ key, id, part: "snippet" });
-  const apiUrl = url + params;
+  console.log("send to backend");
+  const response = await fetch("/.netlify/functions/fetchPlaylist");
+  console.log(response);
 
-  let response;
-  let data;
+  // const url = "https://www.googleapis.com/youtube/v3/playlists?";
+  // const params = new URLSearchParams({ key, id, part: "snippet" });
+  // const apiUrl = url + params;
 
-  try {
-    response = await fetch(apiUrl);
-    data = await response.json();
-  } catch (error) {
-    throw new Error(
-      "Failed to fetch the playlist. Please check your connection."
-    );
-  }
+  // let response;
+  // let data;
 
-  if (!response.ok) {
-    const errorMessage =
-      data?.error?.message || `HTTP Error: ${response.status}`;
-    throw new Error(errorMessage);
-  }
+  // try {
+  //   response = await fetch(apiUrl);
+  //   data = await response.json();
+  // } catch (error) {
+  //   throw new Error(
+  //     "Failed to fetch the playlist. Please check your connection."
+  //   );
+  // }
 
-  if (data.items && data.items.length > 0) {
-    const details = data.items[0].snippet;
-    return details;
-  } else {
-    throw new Error("The playlist is empty, private or does not exist.");
-  }
+  // if (!response.ok) {
+  //   const errorMessage =
+  //     data?.error?.message || `HTTP Error: ${response.status}`;
+  //   throw new Error(errorMessage);
+  // }
+
+  // if (data.items && data.items.length > 0) {
+  //   const details = data.items[0].snippet;
+  //   return details;
+  // } else {
+  //   throw new Error("The playlist is empty, private or does not exist.");
+  // }
 }
 
 async function fetchPlaylistItems(key, playlistId) {
-  const url = "https://www.googleapis.com/youtube/v3/playlistItems?";
-  const params = new URLSearchParams({
-    key,
-    playlistId,
-    part: "snippet",
-    maxResults: 50,
-  });
+  console.log("send to backend");
+  return [];
 
-  let items = [];
-  let next = "";
+  // const url = "https://www.googleapis.com/youtube/v3/playlistItems?";
+  // const params = new URLSearchParams({
+  //   key,
+  //   playlistId,
+  //   part: "snippet",
+  //   maxResults: 50,
+  // });
 
-  do {
-    const apiUrl = url + params;
-    const response = await fetch(apiUrl);
-    const data = await response.json();
+  // let items = [];
+  // let next = "";
 
-    items.push(...data.items);
-    next = data.nextPageToken;
-    params.set("pageToken", next);
-  } while (next);
-  return items;
+  // do {
+  //   const apiUrl = url + params;
+  //   const response = await fetch(apiUrl);
+  //   const data = await response.json();
+
+  //   items.push(...data.items);
+  //   next = data.nextPageToken;
+  //   params.set("pageToken", next);
+  // } while (next);
+  // return items;
 }
 
 function formatPlaylistData(data, items) {
