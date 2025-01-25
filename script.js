@@ -3,9 +3,7 @@ function getElements() {
     panelHeader: document.getElementById("panel-header"),
     panelBody: document.getElementById("panel-body"),
     output: document.getElementById("output"),
-    apiInput: document.getElementById("api-input"),
     idInput: document.getElementById("id-input"),
-    apiBtn: document.getElementById("save-api"),
     idBtn: document.getElementById("save-id"),
     fetchBtn: document.getElementById("fetch-info"),
     params: document.getElementById("parameters"),
@@ -13,10 +11,8 @@ function getElements() {
 }
 
 function prepareParamsForm(fetchBtn) {
-  const api = localStorage.getItem("api") || "";
   const id = localStorage.getItem("id") || "";
-  fetchBtn.disabled = !(api && id);
-  return { api, id };
+  return { id };
 }
 
 function updateGridItem(item, gridItem) {
@@ -24,21 +20,6 @@ function updateGridItem(item, gridItem) {
   const url = item.wbUrl ? item.wbUrl : item.url;
   gridItem.className = `grid-item ${item.class}`;
   gridItem.innerHTML = `<a href="${url}" target="_blank"><p>${title}</p></a>`;
-}
-
-function updateParamsDisplay(params, api, id) {
-  let secretKey = "";
-  params.style.display = api || id ? "flex" : "none";
-  if (api.length) {
-    secretKey =
-      api.slice(0, 3) +
-      "******************" +
-      api.slice(api.length - 3, api.length);
-  }
-  params.innerHTML = `
-      <p>Api Key: <span>${secretKey}</span></p>
-      <p>Playlist ID: <span>${id}</span></p>
-    `;
 }
 
 function updateDetailsText(detailsText, data) {
@@ -111,63 +92,51 @@ function addEventListeners(elements, loader, api, id) {
     togglePanel(panelHeader, panelBody);
   });
 
-  apiInput.addEventListener("input", () => {
-    api = apiInput.value.trim();
-    apiBtn.disabled = !api;
-    fetchBtn.disabled = !(api && id);
-  });
-
   idInput.addEventListener("input", () => {
     id = idInput.value.trim();
-    idBtn.disabled = !id;
-    fetchBtn.disabled = !(api && id);
+    // idBtn.disabled = !id;
+    // fetchBtn.disabled = !(api && id);
+    // console.log("g o");
   });
 
-  apiBtn.addEventListener("click", () => {
-    if (api.length >= 8) {
-      saveItem("api", api, apiInput, params, api, id);
-    } else {
-      alert("Invalid API Key");
-    }
-  });
-
-  idBtn.addEventListener("click", () => {
+  idBtn.addEventListener("click", async () => {
     if (id.length >= 8) {
-      saveItem("id", id, idInput, params, api, id);
+      const data = await fetchPlaylist(id);
+      console.log(data);
     } else {
       alert("Invalid Playlist ID");
     }
   });
 
-  fetchBtn.addEventListener("click", async () => {
-    if (
-      saveItem("api", api, apiInput, params, api, id) &&
-      saveItem("id", id, idInput, params, api, id)
-    ) {
-      try {
-        const data = await fetchPlaylist(api, id);
-        output.innerHTML = "";
-        loader.classList.add("visible");
-        const items = await fetchPlaylistItems(api, id);
-        const formattedData = formatPlaylistData(data, items);
-        loader.classList.remove("visible");
-        togglePanel(panelHeader, panelBody);
-        // printItems(formattedData);
-      } catch (e) {
-        loader.classList.remove("visible");
-        console.error("Error occurred:", e);
-        alert(`Error: ${e.message || "Something went wrong"}`);
-      }
-    }
-  });
+  // fetchBtn.addEventListener("click", async () => {
+  //   if (
+  //     saveItem("api", api, apiInput, params, api, id) &&
+  //     saveItem("id", id, idInput, params, api, id)
+  //   ) {
+  //     try {
+  //       const data = await fetchPlaylist(api, id);
+  //       output.innerHTML = "";
+  //       loader.classList.add("visible");
+  //       const items = await fetchPlaylistItems(api, id);
+  //       const formattedData = formatPlaylistData(data, items);
+  //       loader.classList.remove("visible");
+  //       togglePanel(panelHeader, panelBody);
+  //       // printItems(formattedData);
+  //     } catch (e) {
+  //       loader.classList.remove("visible");
+  //       console.error("Error occurred:", e);
+  //       alert(`Error: ${e.message || "Something went wrong"}`);
+  //     }
+  //   }
+  // });
 }
 
-async function fetchPlaylist(key, id) {
+async function fetchPlaylist(id) {
   console.log("Sending to backend with query parameter:", id);
   const url = `/.netlify/functions/fetchPlaylist?id=${encodeURIComponent(id)}`;
   const response = await fetch(url + id);
   data = await response.json();
-  console.log(data);
+  return data;
 }
 
 async function fetchPlaylistItems(key, playlistId) {
@@ -437,7 +406,6 @@ async function run() {
   const elements = getElements();
   const { api, id } = prepareParamsForm(elements.fetchBtn);
   const loader = await loadLoader();
-  updateParamsDisplay(elements.params, api, id);
   addEventListeners(elements, loader, api, id);
   const localData = JSON.parse(localStorage.getItem("playlistData"));
 
